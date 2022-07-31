@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:expense/transation.dart';
 import 'package:expense/widgets/transaction_card.dart';
 import 'package:flutter/material.dart';
@@ -19,13 +21,13 @@ class ExpenseApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final materialThemeData = ThemeData(
       scaffoldBackgroundColor: Colors.white,
-      appBarTheme: AppBarTheme(color: Colors.blue.shade600),
-      primaryColor: Colors.blue,
-      secondaryHeaderColor: Colors.blue,
-      canvasColor: Colors.blue,
-      backgroundColor: Colors.red,
-      colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue)
-          .copyWith(secondary: Colors.blue),
+      //appBarTheme: AppBarTheme(color: Colors.amber.shade600),
+      primarySwatch: Colors.pink,
+      //secondaryHeaderColor: Colors.blue,
+      //canvasColor: Colors.blue,
+      //backgroundColor: Colors.red,
+      //colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.blue)
+      //    .copyWith(secondary: Colors.blue),
     );
 
     final materialApp = MaterialAppData(theme: materialThemeData);
@@ -55,6 +57,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final data = Transactions();
   final titleController = TextEditingController();
   final amountController = TextEditingController();
+  int maxLen = 0;
 
   @override
   void initState() {
@@ -66,6 +69,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final amts = data.txs.map((e) => e.len);
+    maxLen = 0;
+    if (amts.isNotEmpty) maxLen = amts.reduce(max);
+
     return PlatformScaffold(
         appBar: PlatformAppBar(
           title: const Text("Expense"),
@@ -80,20 +87,11 @@ class _MyHomePageState extends State<MyHomePage> {
         body: SafeArea(child: buildBody()));
   }
 
-  onShowAddTx(BuildContext ctx) {
-    showPlatformModalSheet(
-        context: ctx,
-        builder: (_) {
-          return Text('xxx');
-        });
-    print("Add");
-  }
-
   Widget buildBody() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [buildInputs(), buildList()],
+      children: [buildChart(), buildList()],
     );
   }
 
@@ -113,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget buildTransaction(ctx, index) {
     Transaction tx = data.txAt(index);
 
-    return TransactionCard(tx);
+    return TransactionCard(tx, maxLen);
   }
 
   addNewTx() {
@@ -124,38 +122,56 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       data.add(title, price);
     });
+
+    Navigator.of(context).pop();
+  }
+
+  ///////////////////////////////////////////
+  /// Inputs
+  ///
+  onShowAddTx(BuildContext ctx) {
+    showPlatformModalSheet(
+        context: ctx,
+        builder: (_) {
+          return buildInputs();
+        });
   }
 
   Widget buildInputs() {
-    return Card(
-        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 5),
-        elevation: 5,
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: PlatformTextField(
-                  hintText: "Item",
-                  controller: titleController,
-                ),
+    return SafeArea(
+      child: SizedBox(
+        height: 700,
+        child: Card(
+            margin: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            elevation: 5,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: PlatformTextField(
+                      hintText: "Item",
+                      controller: titleController,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: PlatformTextField(
+                      hintText: "Price",
+                      controller: amountController,
+                    ),
+                  ),
+                  PlatformTextButton(
+                    child: Text("Add"),
+                    onPressed: () {
+                      addNewTx();
+                    },
+                  )
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: PlatformTextField(
-                  hintText: "Price",
-                  controller: amountController,
-                ),
-              ),
-              PlatformTextButton(
-                child: Text("Add"),
-                onPressed: () {
-                  addNewTx();
-                },
-              )
-            ],
-          ),
-        ));
+            )),
+      ),
+    );
   }
 }
